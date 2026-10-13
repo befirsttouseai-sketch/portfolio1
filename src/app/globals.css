@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-navy: #101B35;
+  --color-navy-dark: #0B1327;
+  --color-navy-light: #1A294E;
+  --color-orange: #F97316;
+  --color-orange-hover: #EA580C;
+  --color-orange-light: #FFEDD5;
+  --color-bg-white: #FFFFFF;
+  --color-bg-light: #F5F7FA;
+  --color-text-primary: #172033;
+  --color-text-secondary: #64748B;
+  --color-border-subtle: #E2E8F0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-white);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Accessibility: Respect user reduced-motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Focus visible accessibility outline */
+  :focus-visible {
+    outline: 2px solid var(--color-orange);
+    outline-offset: 2px;
+  }
 }
