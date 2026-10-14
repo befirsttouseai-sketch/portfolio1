@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { personalInfo } from "@/data/portfolioData";
-import { Send, CheckCircle2, AlertCircle, Loader2, Mail } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, Loader2, Mail, RefreshCw } from "lucide-react";
 
 interface FormData {
   fullName: string;
@@ -28,7 +28,7 @@ export const ContactForm: React.FC = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const [submittedViaClient, setSubmittedViaClient] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -69,7 +69,7 @@ export const ContactForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) {
@@ -77,12 +77,42 @@ export const ContactForm: React.FC = () => {
     }
 
     setStatus("submitting");
+    setErrorMessage(null);
 
-    // Realistic brief submission experience with fallback to mailto
-    setTimeout(() => {
-      setStatus("success");
-      setSubmittedViaClient(true);
-    }, 700);
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${personalInfo.email}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          _replyto: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          _subject: `New Portfolio Message from ${formData.fullName}: ${formData.subject}`,
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data && (data.success === "true" || data.success === true)) {
+        setStatus("success");
+      } else {
+        throw new Error(data?.message || "Failed to deliver message to email service.");
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Network request failed. Please check your internet connection or use direct email.";
+      setErrorMessage(msg);
+      setStatus("error");
+    }
   };
 
   const openMailto = () => {
@@ -99,7 +129,7 @@ export const ContactForm: React.FC = () => {
     setFormData({ fullName: "", email: "", subject: "", message: "" });
     setErrors({});
     setStatus("idle");
-    setSubmittedViaClient(false);
+    setErrorMessage(null);
   };
 
   return (
@@ -119,39 +149,77 @@ export const ContactForm: React.FC = () => {
       </div>
 
       {status === "success" ? (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-6 text-center animate-fade-in">
-          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-            <CheckCircle2 className="w-6 h-6" />
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center animate-fade-in">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-7 h-7" />
           </div>
-          <h4 className="text-base font-bold text-navy">
-            Message Prepared Successfully!
+          <h4 className="text-lg font-bold text-navy">
+            Message Sent to {personalInfo.email}!
           </h4>
           <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-md mx-auto leading-relaxed">
-            Thank you, <strong className="text-navy">{formData.fullName}</strong>. To ensure direct
-            delivery to Pemba&apos;s verified inbox, you can launch your email client with this prefilled message:
+            Thank you, <strong className="text-navy">{formData.fullName}</strong>. Your message has been
+            dispatched directly to Pemba&apos;s email inbox. Pemba will review your inquiry and reply to{" "}
+            <strong className="text-navy">{formData.email}</strong> shortly.
           </p>
 
-          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={openMailto}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-orange text-white text-xs font-semibold hover:bg-orange-hover transition-colors shadow-xs"
-            >
-              <Mail className="w-4 h-4" />
-              <span>Launch Default Email App</span>
-            </button>
+          <div className="mt-5 p-3.5 rounded-lg bg-white/80 border border-emerald-200/80 text-left text-xs text-slate-600 max-w-md mx-auto">
+            <p className="font-semibold text-navy flex items-center gap-1.5 mb-1">
+              <Mail className="w-4 h-4 text-orange" />
+              <span>Direct Inbox Delivery Active</span>
+            </p>
+            <p className="text-[11px] leading-relaxed">
+              If this is the first submission to this address, FormSubmit sends a one-time activation email to{" "}
+              <strong className="text-navy">{personalInfo.email}</strong>. Check your inbox to confirm activation.
+            </p>
+          </div>
 
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
               onClick={resetForm}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-semibold text-text-secondary hover:text-navy hover:bg-white border border-slate-200 transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-orange text-white text-xs font-semibold hover:bg-orange-hover transition-colors shadow-xs cursor-pointer"
             >
-              Write Another Message
+              <RefreshCw className="w-4 h-4" />
+              <span>Send Another Message</span>
             </button>
           </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {/* Error Banner with Direct Email Fallback */}
+          {status === "error" && (
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs animate-fade-in">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-rose-900">
+                    Could not send message automatically
+                  </p>
+                  <p className="mt-0.5 text-rose-700">
+                    {errorMessage || "Network error. You can launch your email client directly below to send your pre-filled message."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={openMailto}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-700 text-white font-semibold text-xs hover:bg-rose-800 transition-colors cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send via Default Email App</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatus("idle")}
+                      className="px-3 py-1.5 rounded-md bg-white text-rose-800 border border-rose-300 font-semibold text-xs hover:bg-rose-100/50 transition-colors cursor-pointer"
+                    >
+                      Dismiss & Retry
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Full Name */}
           <div>
             <label
@@ -298,7 +366,7 @@ export const ContactForm: React.FC = () => {
               {status === "submitting" ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing message...</span>
+                  <span>Sending to {personalInfo.email}...</span>
                 </>
               ) : (
                 <>
@@ -313,4 +381,3 @@ export const ContactForm: React.FC = () => {
     </div>
   );
 };
-

@@ -34,7 +34,7 @@ export const personalInfo = {
   monogram: "PS",
   title: "Frontend Web Developer",
   phone: "+977 9851145639",
-  email: "pembasherpa20@gmaiil.com", // Preserved exact address as specified in requirements
+  email: "pembasherpa20@gmail.com",
   primaryRole: "Frontend development and responsive web design",
   mainGoal: "Showcase development projects, communicate technical abilities, attract clients and employers, and generate professional inquiries.",
   location: "Nepal",

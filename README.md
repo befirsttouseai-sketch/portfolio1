@@ -34,7 +34,7 @@ Designed following editorial aesthetics with deep navy (`#101B35`), vibrant oran
    - "Have a project in mind?" CTA banner.
 6. **Development Approach:** 4-step methodology (01 Understand, 02 Design, 03 Develop, 04 Refine).
 7. **Contact Experience:**
-   - Accurate contact details: `pembasherpa20@gmaiil.com` and `+977 9851145639`.
+   - Accurate contact details: `pembasherpa20@gmail.com` and `+977 9851145639`.
    - One-click copy email & phone buttons with clipboard feedback.
    - Validated interactive contact form with error handling and default email app (`mailto:`) fallback launcher.
 8. **Footer:** Monogram, quick links, direct contact, dynamic copyright year, and smooth back-to-top button.
